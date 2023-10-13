@@ -11,7 +11,7 @@ import {
 } from 'react-native-agora';
 
 const appId = 'd05d649ea90d4a8fb592835692ab524f';
-const channelName = 'phuc';
+const channelName = 'demo';
 const token =
   '007eJxTYMhbydOyckXsyTcO8ZXPhf+p7dIxOpcpdeuX75o7LJ+VbJcrMKQYmKaYmVimJloapJgkWqQlmVoaWRibmlkaJSaZGpmk3T6qkdoQyMgQtPQQIyMDBIL4LAwFGaXJDAwAjxIgcA==';
 const uid = 0;
@@ -26,7 +26,7 @@ const App = () => {
   const [userID, setUserID] = useState(
     Math.floor(new Date().getTime() / 1000).toString(),
   ); // Uid of the remote user
-  const [rtcToken, setRtcToken] = useState(token);
+  const [rtcToken, setRtcToken] = useState('');
   const [startObject, setStartObject] = useState({
     resource_id: '',
     sid: '',
@@ -38,13 +38,22 @@ const App = () => {
   });
 
   useEffect(() => {
+    // axios
+    //   .post('https://dev-api.sevenrone.online/api/v1/recordings/rtc_token', {
+    //     params: {channel_name: channelName, user_id: userID},
+    //   })
+    //   .then(res => {
+    //     console.log('rtcToken: ', res.data.rtc_token);
+    //     setRtcToken(res?.data?.rtc_token);
+    //   })
+    //   .catch(err => {
+    //     console.log(err);
+    //   });
     axios
-      .post('https://dev-api.sevenrone.online/api/v1/recordings/rtc_token', {
-        params: {channel_name: channelName, user_id: userID},
-      })
+      .get('https://dev-api.sevenrone.online/api/v1/platforms?limit=10')
       .then(res => {
-        console.log('rtcToken: ', res.data.rtc_token);
-        setRtcToken(res?.data?.rtc_token);
+        console.log('rtcToken: ', res.data.records[0].token);
+        setRtcToken(res.data.records[0].token);
       })
       .catch(err => {
         console.log(err);
@@ -95,19 +104,19 @@ const App = () => {
       );
 
       agoraEngineRef.current?.startPreview();
-      agoraEngineRef.current?.joinChannelWithUserAccount(
-        rtcToken,
-        channelName,
-        userID.toString(),
-      );
-      // agoraEngineRef.current?.joinChannel(
+      // agoraEngineRef.current?.joinChannelWithUserAccount(
       //   rtcToken,
       //   channelName,
-      //   parseInt(userID),
-      //   {
-      //     clientRoleType: ClientRoleType.ClientRoleBroadcaster,
-      //   },
+      //   userID.toString(),
       // );
+      agoraEngineRef.current?.joinChannel(
+        rtcToken,
+        channelName,
+        parseInt(userID),
+        {
+          clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+        },
+      );
       axios
         .post('https://dev-api.sevenrone.online/api/v1/recordings/start', {
           channel_name: channelName,
@@ -128,6 +137,13 @@ const App = () => {
   };
 
   const leave = () => {
+    console.log({
+      channel_name: channelName,
+      user_id: userID,
+      mode: 'mix',
+      resource_id: startObject?.resource_id || '',
+      sid: startObject?.sid,
+    });
     try {
       agoraEngineRef.current?.leaveChannel();
       axios
@@ -140,7 +156,7 @@ const App = () => {
         })
         .then(res => {
           console.log('setStartObject: ', res.data);
-          setStartObject({...res?.data});
+          // setStartObject({...res?.data});
         })
         .catch(err => {
           console.log(err);
@@ -235,7 +251,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 40,
+    height: 100,
     position: 'absolute',
     bottom: 10,
     left: 0,
@@ -251,6 +267,13 @@ const styles = StyleSheet.create({
   },
   textCenter: {
     textAlign: 'center',
+  },
+  input: {
+    height: 40,
+    width: '100%',
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
 });
 
