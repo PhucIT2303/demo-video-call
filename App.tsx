@@ -1,6 +1,14 @@
 import axios from 'axios';
+import {Input} from 'native-base';
 import React, {useRef, useState, useEffect} from 'react';
-import {SafeAreaView, StyleSheet, View, Text, Dimensions} from 'react-native';
+import {
+  SafeAreaView,
+  StyleSheet,
+  View,
+  Text,
+  Dimensions,
+  TextInput,
+} from 'react-native';
 import {PermissionsAndroid, Platform} from 'react-native';
 import {
   ClientRoleType,
@@ -8,6 +16,8 @@ import {
   IRtcEngine,
   RtcSurfaceView,
   ChannelProfileType,
+  ConnectionStateType,
+  ConnectionChangedReasonType,
 } from 'react-native-agora';
 
 const appId = 'd05d649ea90d4a8fb592835692ab524f';
@@ -16,6 +26,8 @@ const token =
   '007eJxTYMhbydOyckXsyTcO8ZXPhf+p7dIxOpcpdeuX75o7LJ+VbJcrMKQYmKaYmVimJloapJgkWqQlmVoaWRibmlkaJSaZGpmk3T6qkdoQyMgQtPQQIyMDBIL4LAwFGaXJDAwAjxIgcA==';
 const uid = 0;
 
+// const userID = '1697272366';
+
 const {height} = Dimensions.get('screen');
 
 const App = () => {
@@ -23,10 +35,10 @@ const App = () => {
   const [isJoined, setIsJoined] = useState(false); // Indicates if the local user has joined the channel
   const [remoteUid, setRemoteUid] = useState(0); // Uid of the remote user
   const [message, setMessage] = useState(''); // Message to the user
-  const [userID, setUserID] = useState(
-    Math.floor(new Date().getTime() / 1000).toString(),
-  ); // Uid of the remote user
+  const [userID, setUserID] = useState(''); // Uid of the remote user
+  const [channelName, setChannelName] = useState(''); // Uid of the remote user
   const [rtcToken, setRtcToken] = useState('');
+  const [localUID, setLocalUID] = useState(0);
   const [startObject, setStartObject] = useState({
     resource_id: '',
     sid: '',
@@ -34,31 +46,35 @@ const App = () => {
 
   useEffect(() => {
     // Initialize Agora engine when the app starts
+    console.log('**** test setupVideoSDKEngine Initialize');
     setupVideoSDKEngine();
-  });
+  }, []);
 
-  useEffect(() => {
-    // axios
-    //   .post('https://dev-api.sevenrone.online/api/v1/recordings/rtc_token', {
-    //     params: {channel_name: channelName, user_id: userID},
-    //   })
-    //   .then(res => {
-    //     console.log('rtcToken: ', res.data.rtc_token);
-    //     setRtcToken(res?.data?.rtc_token);
-    //   })
-    //   .catch(err => {
-    //     console.log(err);
-    //   });
-    axios
-      .get('https://dev-api.sevenrone.online/api/v1/platforms?limit=10')
-      .then(res => {
-        console.log('rtcToken: ', res.data.records[0].token);
-        setRtcToken(res.data.records[0].token);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }, [userID]);
+  // useEffect(() => {
+  //   const params = {channel_name: channelName, user_id: userID};
+  //   console.log('**** test params token', params);
+  //   axios
+  //     .post(
+  //       'https://dev-api.sevenrone.online/api/v1/recordings/rtc_token',
+  //       params,
+  //     )
+  //     .then(res => {
+  //       console.log('get rtcToken: ', res.data.rtc_token);
+  //       setRtcToken(res?.data?.rtc_token);
+  //     })
+  //     .catch(err => {
+  //       console.log(err);
+  //     });
+  //   // axios
+  //   //   .get('https://dev-api.sevenrone.online/api/v1/platforms')
+  //   //   .then(res => {
+  //   //     console.log('rtcToken: ', res.data.records[0].token);
+  //   //     setRtcToken(res.data.records[0].token);
+  //   //   })
+  //   //   .catch(err => {
+  //   //     console.log(err);
+  //   //   });
+  // }, [userID]);
 
   const setupVideoSDKEngine = async () => {
     try {
@@ -75,13 +91,43 @@ const App = () => {
           setIsJoined(true);
         },
         onUserJoined: (_connection, Uid) => {
-          console.log('Uid: ', Uid);
+          console.log('Remote user joined with uid Uid: ', Uid);
           showMessage('Remote user joined with uid ' + Uid);
           setRemoteUid(Uid);
         },
         onUserOffline: (_connection, Uid) => {
           showMessage('Remote user left the channel. uid: ' + Uid);
           setRemoteUid(0);
+        },
+        onConnectionStateChanged(connection, state, reason) {
+          setLocalUID(connection?.localUid || 0);
+          console.log('connection: ', connection);
+          console.log('state: ', state);
+          console.log('reason: ', reason);
+          switch (state) {
+            case ConnectionStateType.ConnectionStateDisconnected:
+              console.log('status connection: ', 'ConnectionStateDisconnected');
+              break;
+            case ConnectionStateType.ConnectionStateConnecting:
+              console.log('status connection: ', 'ConnectionStateConnecting');
+              break;
+            case ConnectionStateType.ConnectionStateConnected:
+              console.log('status connection: ', 'ConnectionStateConnected');
+              break;
+            case ConnectionStateType.ConnectionStateReconnecting:
+              console.log('status connection: ', 'ConnectionStateReconnecting');
+              break;
+            case ConnectionStateType.ConnectionStateFailed:
+              console.log('status connection: ', 'ConnectionStateFailed');
+              break;
+            default:
+              console.log('status connection: ', state);
+              break;
+          }
+        },
+        onRtcStats(connection, stats) {
+          // console.log('onRtcStats connection: ', connection);
+          // console.log('onRtcStats state: ', stats);
         },
       });
       agoraEngine.initialize({
@@ -99,37 +145,73 @@ const App = () => {
       return;
     }
     try {
+      const paramsToken = {channel_name: channelName, user_id: userID};
+      console.log('**** test params', paramsToken);
+      const res = await axios.post(
+        'https://dev-api.sevenrone.online/api/v1/recordings/rtc_token',
+        paramsToken,
+      );
+      // .then(res => {
+      //   console.log('get rtcToken: ', res.data.rtc_token);
+      //   setRtcToken(res?.data?.rtc_token);
+      // })
+      // .catch(err => {
+      //   console.log(err);
+      // });
+
+      if (!res?.data?.rtc_token || res?.data?.rtc_token === '') {
+        console.log('*** test error', res?.data);
+
+        throw showMessage('ERROR');
+      }
+
+      showMessage('');
+
+      const token = res?.data?.rtc_token;
+
+      setRtcToken(res?.data?.rtc_token);
+
+      console.log('***** test rtcToken userID', userID, token);
       agoraEngineRef.current?.setChannelProfile(
         ChannelProfileType.ChannelProfileCommunication,
       );
 
       agoraEngineRef.current?.startPreview();
-      // agoraEngineRef.current?.joinChannelWithUserAccount(
-      //   rtcToken,
-      //   channelName,
-      //   userID.toString(),
-      // );
-      agoraEngineRef.current?.joinChannel(
-        rtcToken,
+      agoraEngineRef.current?.joinChannelWithUserAccount(
+        token,
         channelName,
-        parseInt(userID),
+        userID,
         {
           clientRoleType: ClientRoleType.ClientRoleBroadcaster,
         },
       );
+      const params = {
+        channel_name: channelName,
+        user_id: userID,
+        mode: 'mix',
+        rtc_token: token,
+      };
+      console.log('**** test params start', params);
+
+      // agoraEngineRef.current?.joinChannel(
+      //   rtcToken,
+      //   channelName,
+      //   parseInt(userID),
+      //   {
+      //     clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+      //   },
+      // );
       axios
-        .post('https://dev-api.sevenrone.online/api/v1/recordings/start', {
-          channel_name: channelName,
-          user_id: userID,
-          mode: 'mix',
-          rtc_token: rtcToken,
-        })
+        .post(
+          'https://dev-api.sevenrone.online/api/v1/recordings/start',
+          params,
+        )
         .then(res => {
-          console.log('setStartObject: ', res.data);
+          console.log('START setStartObject: ', res.data);
           setStartObject({...res?.data});
         })
         .catch(err => {
-          console.log('err.message: ', err?.response?.message);
+          console.log('err.message start:  ', err?.response);
         });
     } catch (e) {
       console.log(e);
@@ -137,29 +219,25 @@ const App = () => {
   };
 
   const leave = () => {
-    console.log({
+    const params = {
       channel_name: channelName,
       user_id: userID,
       mode: 'mix',
       resource_id: startObject?.resource_id || '',
       sid: startObject?.sid,
-    });
+    };
+
+    console.log('**** test params stop', params);
     try {
       agoraEngineRef.current?.leaveChannel();
       axios
-        .post('https://dev-api.sevenrone.online/api/v1/recordings/stop', {
-          channel_name: channelName,
-          user_id: userID,
-          mode: 'mix',
-          resource_id: startObject?.resource_id || '',
-          sid: startObject?.sid,
-        })
+        .post('https://dev-api.sevenrone.online/api/v1/recordings/stop', params)
         .then(res => {
-          console.log('setStartObject: ', res.data);
+          console.log('STOP setStartObject: ', res.data);
           // setStartObject({...res?.data});
         })
         .catch(err => {
-          console.log(err);
+          console.log(err?.response?.data);
         });
       setRemoteUid(0);
       setIsJoined(false);
@@ -167,6 +245,14 @@ const App = () => {
     } catch (e) {
       console.log(e);
     }
+  };
+
+  const onChangeUser = (text: string) => {
+    setUserID(text);
+  };
+
+  const onChangeChannelName = (text: string) => {
+    setChannelName(text);
   };
 
   return (
@@ -189,14 +275,16 @@ const App = () => {
         {isJoined ? (
           <React.Fragment key={0}>
             <RtcSurfaceView
-              canvas={{uid: uid}}
+              canvas={{uid: 0}}
               style={styles.videoViewMini}
               zOrderMediaOverlay
               zOrderOnTop
             />
           </React.Fragment>
         ) : (
-          <Text style={styles.textCenter}>Join a channel</Text>
+          <>
+            <Text style={styles.textCenter}>Join a channel</Text>
+          </>
         )}
         {isJoined && remoteUid !== 0 ? (
           <React.Fragment key={remoteUid}>
@@ -206,9 +294,34 @@ const App = () => {
             />
           </React.Fragment>
         ) : (
-          <Text style={styles.textCenter}>
-            Waiting for a remote user to join
-          </Text>
+          <>
+            <Text style={styles.textCenter}>
+              Waiting for a remote user to join
+            </Text>
+            <View>
+              <Text>User</Text>
+              <TextInput
+                editable
+                multiline
+                numberOfLines={4}
+                maxLength={40}
+                onChangeText={onChangeUser}
+                style={{padding: 10, backgroundColor: 'white'}}
+              />
+            </View>
+
+            <View>
+              <Text>Channel</Text>
+              <TextInput
+                editable
+                multiline
+                numberOfLines={4}
+                maxLength={40}
+                onChangeText={onChangeChannelName}
+                style={{padding: 10, backgroundColor: 'white'}}
+              />
+            </View>
+          </>
         )}
         {remoteUid === 0 && !!message && (
           <Text style={[styles.info, styles.textCenter]}>{message}</Text>
