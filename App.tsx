@@ -21,7 +21,7 @@ import {
 } from 'react-native-agora';
 
 const appId = 'd05d649ea90d4a8fb592835692ab524f';
-const channelName = 'demo';
+// const channelName = 'demo';
 const token =
   '007eJxTYMhbydOyckXsyTcO8ZXPhf+p7dIxOpcpdeuX75o7LJ+VbJcrMKQYmKaYmVimJloapJgkWqQlmVoaWRibmlkaJSaZGpmk3T6qkdoQyMgQtPQQIyMDBIL4LAwFGaXJDAwAjxIgcA==';
 const uid = 0;
@@ -91,6 +91,7 @@ const App = () => {
           setIsJoined(true);
         },
         onUserJoined: (_connection, Uid) => {
+          console.log('Remote user joined with _connection: ', _connection);
           console.log('Remote user joined with uid Uid: ', Uid);
           showMessage('Remote user joined with uid ' + Uid);
           setRemoteUid(Uid);
