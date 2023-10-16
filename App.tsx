@@ -1,5 +1,4 @@
 import axios from 'axios';
-import {Input} from 'native-base';
 import React, {useRef, useState, useEffect} from 'react';
 import {
   SafeAreaView,
@@ -8,6 +7,8 @@ import {
   Text,
   Dimensions,
   TextInput,
+  TouchableOpacity,
+  Keyboard,
 } from 'react-native';
 import {PermissionsAndroid, Platform} from 'react-native';
 import {
@@ -43,6 +44,7 @@ const App = () => {
     resource_id: '',
     sid: '',
   });
+  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
     // Initialize Agora engine when the app starts
@@ -210,9 +212,11 @@ const App = () => {
         .then(res => {
           console.log('START setStartObject: ', res.data);
           setStartObject({...res?.data});
+          setIsRecording(true);
         })
         .catch(err => {
           console.log('err.message start:  ', err?.response);
+          throw showMessage('ERROR');
         });
     } catch (e) {
       console.log(e);
@@ -236,6 +240,7 @@ const App = () => {
         .then(res => {
           console.log('STOP setStartObject: ', res.data);
           // setStartObject({...res?.data});
+          setIsRecording(false);
         })
         .catch(err => {
           console.log(err?.response?.data);
@@ -245,6 +250,7 @@ const App = () => {
       showMessage('You left the channel');
     } catch (e) {
       console.log(e);
+      throw showMessage('ERROR');
     }
   };
 
@@ -258,76 +264,97 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.main}>
-      {remoteUid !== 0 && (
-        <View style={styles.infoContent}>
-          <Text style={styles.textInfo}>Local user uid: {userID}</Text>
-          <Text style={styles.textInfo}>Remote user uid: {remoteUid}</Text>
-        </View>
-      )}
-      <View style={styles.scroll}>
-        <View style={styles.btnContainer}>
-          <Text onPress={join} style={styles.button}>
-            Join
-          </Text>
-          <Text onPress={leave} style={styles.button}>
-            Leave
-          </Text>
-        </View>
-        {isJoined ? (
-          <React.Fragment key={0}>
-            <RtcSurfaceView
-              canvas={{uid: 0}}
-              style={styles.videoViewMini}
-              zOrderMediaOverlay
-              zOrderOnTop
-            />
-          </React.Fragment>
-        ) : (
-          <>
-            <Text style={styles.textCenter}>Join a channel</Text>
-          </>
-        )}
-        {isJoined && remoteUid !== 0 ? (
-          <React.Fragment key={remoteUid}>
-            <RtcSurfaceView
-              canvas={{uid: remoteUid}}
-              style={styles.videoView}
-            />
-          </React.Fragment>
-        ) : (
-          <>
-            <Text style={styles.textCenter}>
-              Waiting for a remote user to join
+      <TouchableOpacity
+        activeOpacity={1}
+        style={{flex: 1}}
+        onPress={Keyboard.dismiss}>
+        {remoteUid !== 0 && (
+          <View style={styles.infoContent}>
+            <Text style={styles.textInfo}>Local user uid: {userID}</Text>
+            <Text style={styles.textInfo}>Remote user uid: {remoteUid}</Text>
+            <Text style={styles.textInfo}>
+              {isRecording ? 'Recording' : 'record Stoped'}
             </Text>
-            <View>
-              <Text>User</Text>
-              <TextInput
-                editable
-                multiline
-                numberOfLines={4}
-                maxLength={40}
-                onChangeText={onChangeUser}
-                style={{padding: 10, backgroundColor: 'white'}}
+          </View>
+        )}
+        <View style={styles.scroll}>
+          <View style={styles.btnContainer}>
+            <Text onPress={join} style={styles.button}>
+              Join
+            </Text>
+            <Text onPress={leave} style={styles.button}>
+              Leave
+            </Text>
+          </View>
+          {isJoined ? (
+            <React.Fragment key={0}>
+              <RtcSurfaceView
+                canvas={{uid: 0}}
+                style={styles.videoViewMini}
+                zOrderMediaOverlay
+                zOrderOnTop
               />
-            </View>
+            </React.Fragment>
+          ) : (
+            <>
+              <Text style={styles.textCenter}>Join a channel</Text>
+            </>
+          )}
+          {isJoined && remoteUid !== 0 ? (
+            <React.Fragment key={remoteUid}>
+              <RtcSurfaceView
+                canvas={{uid: remoteUid}}
+                style={styles.videoView}
+              />
+            </React.Fragment>
+          ) : (
+            <>
+              <Text style={styles.textCenter}>
+                Waiting for a remote user to join
+              </Text>
+              <View>
+                <Text>User</Text>
+                <TextInput
+                  editable
+                  multiline
+                  numberOfLines={4}
+                  maxLength={40}
+                  onChangeText={onChangeUser}
+                  style={{
+                    padding: 10,
+                    backgroundColor: 'white',
+                    color: 'black',
+                  }}
+                />
+              </View>
 
-            <View>
-              <Text>Channel</Text>
-              <TextInput
-                editable
-                multiline
-                numberOfLines={4}
-                maxLength={40}
-                onChangeText={onChangeChannelName}
-                style={{padding: 10, backgroundColor: 'white'}}
-              />
-            </View>
-          </>
-        )}
-        {remoteUid === 0 && !!message && (
-          <Text style={[styles.info, styles.textCenter]}>{message}</Text>
-        )}
-      </View>
+              <View>
+                <Text>Channel</Text>
+                <TextInput
+                  editable
+                  multiline
+                  numberOfLines={4}
+                  maxLength={40}
+                  onChangeText={onChangeChannelName}
+                  style={{
+                    padding: 10,
+                    backgroundColor: 'white',
+                    color: 'black',
+                  }}
+                />
+              </View>
+            </>
+          )}
+          {remoteUid === 0 && !!message && (
+            <Text style={[styles.info, styles.textCenter]}>{message}</Text>
+          )}
+          {
+            <Text style={[styles.info, styles.textCenter]}>
+              {isRecording ? 'Recording' : 'Stoped record'}
+            </Text>
+          }
+        </View>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 
@@ -345,7 +372,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0055cc',
     margin: 5,
   },
-  main: {flex: 1, alignItems: 'center'},
+  main: {flex: 1},
   scroll: {
     flex: 1,
     backgroundColor: '#ddeeff',
