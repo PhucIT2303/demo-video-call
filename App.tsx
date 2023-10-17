@@ -191,7 +191,7 @@ const App = () => {
       const params = {
         channel_name: channelName,
         user_id: userID,
-        mode: 'mix',
+        mode: 'individual',
         rtc_token: token,
       };
       console.log('**** test params start', params);
@@ -227,7 +227,7 @@ const App = () => {
     const params = {
       channel_name: channelName,
       user_id: userID,
-      mode: 'mix',
+      mode: 'individual',
       resource_id: startObject?.resource_id || '',
       sid: startObject?.sid,
     };
@@ -286,7 +286,7 @@ const App = () => {
               Leave
             </Text>
           </View>
-          {isJoined ? (
+          {/* {isJoined && remoteUid === 0 ? (
             <React.Fragment key={0}>
               <RtcSurfaceView
                 canvas={{uid: 0}}
@@ -296,6 +296,13 @@ const App = () => {
               />
             </React.Fragment>
           ) : (
+            !isJoined && (
+              <>
+                <Text style={styles.textCenter}>Join a channel</Text>
+              </>
+            )
+          )} */}
+          {!isJoined && (
             <>
               <Text style={styles.textCenter}>Join a channel</Text>
             </>
