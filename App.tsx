@@ -27,6 +27,8 @@ const token =
   '007eJxTYMhbydOyckXsyTcO8ZXPhf+p7dIxOpcpdeuX75o7LJ+VbJcrMKQYmKaYmVimJloapJgkWqQlmVoaWRibmlkaJSaZGpmk3T6qkdoQyMgQtPQQIyMDBIL4LAwFGaXJDAwAjxIgcA==';
 const uid = 0;
 
+const mode = 'mix';
+
 // const userID = '1697272366';
 
 const {height} = Dimensions.get('screen');
@@ -191,7 +193,7 @@ const App = () => {
       const params = {
         channel_name: channelName,
         user_id: userID,
-        mode: 'individual',
+        mode: mode,
         rtc_token: token,
       };
       console.log('**** test params start', params);
@@ -227,7 +229,7 @@ const App = () => {
     const params = {
       channel_name: channelName,
       user_id: userID,
-      mode: 'individual',
+      mode: mode,
       resource_id: startObject?.resource_id || '',
       sid: startObject?.sid,
     };
