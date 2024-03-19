@@ -18,14 +18,13 @@ import {
   RtcSurfaceView,
   ChannelProfileType,
   ConnectionStateType,
-  ConnectionChangedReasonType,
 } from 'react-native-agora';
 
 const appId = 'd05d649ea90d4a8fb592835692ab524f';
 // const channelName = 'demo';
-const token =
-  '007eJxTYMhbydOyckXsyTcO8ZXPhf+p7dIxOpcpdeuX75o7LJ+VbJcrMKQYmKaYmVimJloapJgkWqQlmVoaWRibmlkaJSaZGpmk3T6qkdoQyMgQtPQQIyMDBIL4LAwFGaXJDAwAjxIgcA==';
-const uid = 0;
+// const token =
+//   '007eJxTYMhbydOyckXsyTcO8ZXPhf+p7dIxOpcpdeuX75o7LJ+VbJcrMKQYmKaYmVimJloapJgkWqQlmVoaWRibmlkaJSaZGpmk3T6qkdoQyMgQtPQQIyMDBIL4LAwFGaXJDAwAjxIgcA==';
+// const uid = 0;
 
 const mode = 'mix';
 
@@ -47,6 +46,8 @@ const App = () => {
     sid: '',
   });
   const [isRecording, setIsRecording] = useState(false);
+  const [patienID, setPatienID] = useState('');
+  const [doctorID, setDoctorID] = useState('');
 
   useEffect(() => {
     // Initialize Agora engine when the app starts
@@ -195,6 +196,8 @@ const App = () => {
         user_id: userID,
         mode: mode,
         rtc_token: token,
+        doctor_id: doctorID,
+        patient_id: patienID,
       };
       console.log('**** test params start', params);
 
@@ -232,6 +235,8 @@ const App = () => {
       mode: mode,
       resource_id: startObject?.resource_id || '',
       sid: startObject?.sid,
+      doctor_id: doctorID,
+      patient_id: patienID,
     };
 
     console.log('**** test params stop', params);
@@ -262,6 +267,14 @@ const App = () => {
 
   const onChangeChannelName = (text: string) => {
     setChannelName(text);
+  };
+
+  const onChangePatienID = (text: string) => {
+    setPatienID(text);
+  };
+
+  const onChangeDoctorID = (text: string) => {
+    setDoctorID(text);
   };
 
   return (
@@ -324,10 +337,6 @@ const App = () => {
               <View>
                 <Text>User</Text>
                 <TextInput
-                  editable
-                  multiline
-                  numberOfLines={4}
-                  maxLength={40}
                   onChangeText={onChangeUser}
                   style={{
                     padding: 10,
@@ -340,11 +349,31 @@ const App = () => {
               <View>
                 <Text>Channel</Text>
                 <TextInput
-                  editable
-                  multiline
-                  numberOfLines={4}
-                  maxLength={40}
                   onChangeText={onChangeChannelName}
+                  style={{
+                    padding: 10,
+                    backgroundColor: 'white',
+                    color: 'black',
+                  }}
+                />
+              </View>
+
+              <View>
+                <Text>Doctor ID</Text>
+                <TextInput
+                  onChangeText={onChangeDoctorID}
+                  style={{
+                    padding: 10,
+                    backgroundColor: 'white',
+                    color: 'black',
+                  }}
+                />
+              </View>
+
+              <View>
+                <Text>Patient ID</Text>
+                <TextInput
+                  onChangeText={onChangePatienID}
                   style={{
                     padding: 10,
                     backgroundColor: 'white',
